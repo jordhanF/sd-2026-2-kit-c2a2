@@ -252,6 +252,9 @@ curl http://127.0.0.1:8003/saude
 # {"disjuntores":{"recuperacao":{"estado":"fechado","falhas":0},"llm":{...}}}
 ```
 
+Em container os tempos são outros e a conclusão é a mesma: 7,32 s por falha com o circuito
+fechado, 0,02 s depois que ele abre.
+
 **3. A chave da API está FORA do código?**
 
 Sim. `servicos/comum/llm.py` lê `LLM_API_KEY` do ambiente, o `.env` está no `.gitignore` e
@@ -303,7 +306,8 @@ curl http://127.0.0.1:8001/saude      # documentos: 3, MESMA versao
 
 ## Medições
 
-Máquina: Windows 11, Python 3.11, Redis em container, tudo em `127.0.0.1`.
+Máquina: Windows 11, Python 3.11, Redis em container, tudo em `127.0.0.1`. As linhas
+"em container" vêm do stack completo em `docker compose`.
 
 | Medida | Valor |
 |---|---|
@@ -311,14 +315,19 @@ Máquina: Windows 11, Python 3.11, Redis em container, tudo em `127.0.0.1`.
 | `POST /perguntar` — 1ª chamada | 0,102 s |
 | `POST /perguntar` — média das 4 seguintes | 0,055 s |
 | `POST /perguntar` — mais rápida | 0,037 s |
-| Falha com o circuito **fechado** (conexão recusada) | 2,04 s |
-| Falha com o circuito **aberto** (recusa imediata) | 0,01 s |
+| Falha com o circuito **fechado**, processos locais (conexão recusada) | 2,04 s |
+| Falha com o circuito **aberto**, processos locais (recusa imediata) | 0,01 s |
+| Falha com o circuito **fechado**, em container (nome do serviço sem resolver) | 7,32 s |
+| Falha com o circuito **aberto**, em container | 0,02 s |
 | Índice em disco (3 documentos) | 5,5 KB + 4,2 KB do vetorizador |
 
 Cada `/perguntar` são quatro saltos de rede (geração → recuperação → ingestão duas vezes)
 e ainda fica em dezenas de milissegundos, porque o índice vem do cache enquanto a versão
-não muda. A linha que interessa é a do disjuntor: **2,04 s contra 0,01 s** é a diferença
-entre uma falha que se propaga pelo sistema e uma falha que morre na porta.
+não muda. A linha que interessa é a do disjuntor: **2,04 s contra 0,01 s** é a diferença entre uma
+falha que se propaga pelo sistema e uma falha que morre na porta. Em container a diferença
+é maior ainda — **7,32 s contra 0,02 s** — porque ali a falha não é "conexão recusada", é o
+nome do serviço parado deixando de resolver, o que custa bem mais caro. Quanto pior a
+dependência, mais o disjuntor paga por si.
 
 Exemplo de resposta (modo simulado, com as fontes citadas):
 
