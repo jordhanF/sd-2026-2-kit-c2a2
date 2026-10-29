@@ -15,9 +15,9 @@ import time
 import requests
 
 URLS = {
-    "ingestao": os.getenv("URL_INGESTAO", "http://localhost:8001"),
-    "recuperacao": os.getenv("URL_RECUPERACAO", "http://localhost:8002"),
-    "geracao": os.getenv("URL_GERACAO", "http://localhost:8003"),
+    "ingestao": os.getenv("URL_INGESTAO", "http://127.0.0.1:8001"),
+    "recuperacao": os.getenv("URL_RECUPERACAO", "http://127.0.0.1:8002"),
+    "geracao": os.getenv("URL_GERACAO", "http://127.0.0.1:8003"),
 }
 
 PERGUNTAS = [
@@ -46,6 +46,7 @@ def main() -> int:
     esperar_saude()
 
     print("\n2. indexacao pela fila")
+    sys.stdout.flush()  # o subprocesso escreve no mesmo terminal
     carga = subprocess.run([sys.executable, "exemplos/indexar_documentos.py"], check=False)
     if carga.returncode != 0:
         return carga.returncode

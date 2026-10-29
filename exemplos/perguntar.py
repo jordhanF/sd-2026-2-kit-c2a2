@@ -8,7 +8,7 @@ import sys
 
 import requests
 
-URL_GERACAO = os.getenv("URL_GERACAO", "http://localhost:8003")
+URL_GERACAO = os.getenv("URL_GERACAO", "http://127.0.0.1:8003")
 
 
 def main() -> int:

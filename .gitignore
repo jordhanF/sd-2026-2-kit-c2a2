@@ -9,3 +9,4 @@ venv/
 *_pb2_grpc.py
 .pytest_cache/
 .DS_Store
+dados/

@@ -8,7 +8,10 @@ name: sd-2026-2-kit-c2a2
 services:
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    # A porta e publicada apenas para inspecao pelo host (redis-cli). Os
+    # servicos falam com 'redis:6379' pela rede do compose. Se a 6379 ja estiver
+    # em uso na sua maquina: PORTA_REDIS=6381 docker compose up -d
+    ports: ["${PORTA_REDIS:-6379}:6379"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

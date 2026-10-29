@@ -11,6 +11,12 @@ from servicos.comum.embeddings import similaridade
 
 PESO_COBERTURA = 0.3
 
+# Cosseno zero significa que o trecho nao compartilha NENHUM termo com a
+# pergunta. Trecho assim nao embasa resposta: entra no prompt como ruido e
+# aparece na citacao de fontes com relevancia 0,0000, o que e pior que nao
+# aparecer - sugere fundamentacao que nao existe.
+SCORE_MINIMO = 0.0
+
 
 def normalizar(texto: str) -> set:
     """Palavras em minuscula e sem acento.
@@ -38,7 +44,8 @@ def buscar(vetor_pergunta: list, itens: list, top_k: int = 3,
     """Compara a pergunta com cada item e devolve os top_k mais parecidos.
 
     Duas etapas, de proposito:
-      1. cosseno contra TODO o indice -> top_k * janela candidatos
+      1. cosseno contra TODO o indice -> top_k * janela candidatos,
+         descartando quem nao tem termo nenhum em comum com a pergunta
       2. reordenacao dos candidatos pela cobertura dos termos da pergunta
 
     O cosseno sozinho premia trechos curtos que repetem um termo raro; a cobertura
@@ -55,7 +62,8 @@ def buscar(vetor_pergunta: list, itens: list, top_k: int = 3,
             "score": round(similaridade(vetor_pergunta, item["vetor"]), 6),
         })
     pontuados.sort(key=lambda r: r["score"], reverse=True)
-    candidatos = pontuados[:max(top_k * janela, top_k)]
+    relevantes = [p for p in pontuados if p["score"] > SCORE_MINIMO]
+    candidatos = relevantes[:max(top_k * janela, top_k)]
     return reordenar(pergunta, candidatos)[:top_k]
 
 

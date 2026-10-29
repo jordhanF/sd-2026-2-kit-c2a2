@@ -32,7 +32,7 @@ logger = log.configurar("geracao")
 app = FastAPI(title="Geracao - C2.A2", description="RAG: contexto + LLM.")
 log.registrar_requisicoes(app, logger)
 
-URL_RECUPERACAO = os.getenv("URL_RECUPERACAO", "http://localhost:8002")
+URL_RECUPERACAO = os.getenv("URL_RECUPERACAO", "http://127.0.0.1:8002")
 TIMEOUT = float(os.getenv("TIMEOUT_RECUPERACAO", "10"))
 TENTATIVAS_LLM = int(os.getenv("TENTATIVAS_LLM", "3"))
 

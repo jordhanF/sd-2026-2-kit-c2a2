@@ -10,7 +10,7 @@ import time
 
 import requests
 
-URL_INGESTAO = os.getenv("URL_INGESTAO", "http://localhost:8001")
+URL_INGESTAO = os.getenv("URL_INGESTAO", "http://127.0.0.1:8001")
 
 
 def carregar(pasta: str) -> list:

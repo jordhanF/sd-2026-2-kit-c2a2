@@ -26,7 +26,7 @@ logger = log.configurar("recuperacao")
 app = FastAPI(title="Recuperacao - C2.A2", description="Busca por similaridade.")
 log.registrar_requisicoes(app, logger)
 
-URL_INGESTAO = os.getenv("URL_INGESTAO", "http://localhost:8001")
+URL_INGESTAO = os.getenv("URL_INGESTAO", "http://127.0.0.1:8001")
 TIMEOUT = float(os.getenv("TIMEOUT_INGESTAO", "10"))
 
 # Cache do indice, invalidado por versao. Trafegar todos os vetores a cada

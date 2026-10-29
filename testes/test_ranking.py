@@ -31,11 +31,19 @@ def test_pergunta_sobre_consenso_traz_raft():
     assert [r["origem"] for r in resultados] == ["raft"]
 
 
-def test_top_k_limita_a_quantidade():
+def test_top_k_e_um_teto_nao_uma_cota():
+    """top_k limita quantos voltam; nao obriga a completar com irrelevantes."""
     itens, vetorizador = _indexar()
-    vetor = vetorizador.vetorizar("sistema distribuido")
-    assert len(buscar(vetor, itens, top_k=2, pergunta="sistema distribuido")) == 2
-    assert len(buscar(vetor, itens, top_k=1, pergunta="sistema distribuido")) == 1
+    pergunta = "sistema distribuido, consenso e consistencia"
+    vetor = vetorizador.vetorizar(pergunta)
+    assert len(buscar(vetor, itens, top_k=3, pergunta=pergunta)) == 3
+    assert len(buscar(vetor, itens, top_k=2, pergunta=pergunta)) == 2
+    assert len(buscar(vetor, itens, top_k=1, pergunta=pergunta)) == 1
+
+    # Pergunta que toca um documento so: top_k=3 devolve UM.
+    estreita = "falha parcial"
+    assert len(buscar(vetorizador.vetorizar(estreita), itens, top_k=3,
+                      pergunta=estreita)) == 1
 
 
 def test_resultados_vem_ordenados_por_score_final():
@@ -64,16 +72,37 @@ def test_cobertura_sem_termos_uteis_nao_estoura():
 def test_corpus_maior_que_a_janela_ainda_traz_o_melhor_documento():
     """A ordenacao previa e o que escolhe os CANDIDATOS do reranking.
 
-    Com corpus pequeno a janela cobre tudo e a falta da ordenacao passa
-    despercebida. Com 12 documentos e top_k=1 (janela de 2), pular a ordenacao
-    por cosseno faz o documento certo nem chegar a ser avaliado.
+    O enchimento aqui compartilha UM termo com a pergunta de proposito: assim ele
+    sobrevive ao corte de relevancia zero e a unica coisa que o mantem fora dos
+    candidatos e a ordenacao por cosseno. Com corpus pequeno (ou enchimento sem
+    termo em comum) a falta da ordenacao passaria despercebida.
     """
-    corpus = [{"texto": f"documento de enchimento numero {n} sobre assunto generico",
+    corpus = [{"texto": f"Nota {n}: a palavra consistencia aparece aqui de passagem, "
+                        f"sem tratar do assunto, apenas para encher o indice.",
                "origem": f"ruido{n}"} for n in range(11)]
-    corpus.append({"texto": "O teorema CAP escolhe entre consistencia e disponibilidade.",
-                   "origem": "cap"})
+    corpus.append({"texto": "O teorema CAP escolhe entre consistencia e disponibilidade "
+                            "diante de uma particao de rede.", "origem": "cap"})
     itens, vetorizador = reindexar(corpus)
 
-    pergunta = "teorema CAP, consistencia ou disponibilidade?"
+    pergunta = "teorema CAP: consistencia ou disponibilidade na particao?"
     resultados = buscar(vetorizador.vetorizar(pergunta), itens, top_k=1, pergunta=pergunta)
     assert [r["origem"] for r in resultados] == ["cap"]
+
+
+def test_trecho_sem_termo_em_comum_nao_e_citado_como_fonte():
+    """Relevancia zero nao e fonte.
+
+    Pedir top_k=3 num corpus de 3 nao pode devolver os 3 a qualquer custo: um
+    trecho com cosseno zero nao embasa nada e, citado, sugere uma fundamentacao
+    que nao existe.
+    """
+    corpus = [{"texto": "O teorema CAP escolhe entre consistencia e disponibilidade.",
+               "origem": "cap"},
+              {"texto": "Receita de bolo: farinha, ovos e manteiga no forno.",
+               "origem": "bolo"}]
+    itens, vetorizador = reindexar(corpus)
+    pergunta = "o que diz o teorema CAP?"
+    resultados = buscar(vetorizador.vetorizar(pergunta), itens, top_k=3, pergunta=pergunta)
+
+    assert [r["origem"] for r in resultados] == ["cap"]
+    assert all(r["score"] > 0 for r in resultados)
