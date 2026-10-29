@@ -1,7 +1,89 @@
+# TAREFA 4 - os quatro processos do sistema + o Redis da fila.
+#
+# A unica imagem (ver Dockerfile) sobe quatro vezes com comandos diferentes.
+# O volume 'indice' e compartilhado SO entre quem precisa do arquivo: o worker
+# escreve e a ingestao le. Recuperacao e geracao nao tocam o disco - falam HTTP.
+name: sd-2026-2-kit-c2a2
+
 services:
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
-  # TAREFA 4: acrescente aqui os tres servicos (ingestao, recuperacao, geracao)
-  # depois de escrever um Dockerfile para cada um.
+  ingestao:
+    build: .
+    command: uvicorn servicos.ingestao.app:app --host 0.0.0.0 --port 8001
+    ports: ["8001:8001"]
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CAMINHO_DADOS: /app/dados
+    volumes:
+      - indice:/app/dados
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8001/saude')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # O trabalho caro (reajustar o vocabulario e revetorizar o corpus) roda aqui,
+  # fora do caminho da requisicao. Pode ser replicado: a trava no Redis garante
+  # escritor unico do indice.
+  worker:
+    build: .
+    command: python -m servicos.worker.indexador
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CAMINHO_DADOS: /app/dados
+    volumes:
+      - indice:/app/dados
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  recuperacao:
+    build: .
+    command: uvicorn servicos.recuperacao.app:app --host 0.0.0.0 --port 8002
+    ports: ["8002:8002"]
+    environment:
+      URL_INGESTAO: http://ingestao:8001
+    depends_on:
+      ingestao:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8002/saude')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  geracao:
+    build: .
+    command: uvicorn servicos.geracao.app:app --host 0.0.0.0 --port 8003
+    ports: ["8003:8003"]
+    environment:
+      URL_RECUPERACAO: http://recuperacao:8002
+      # A chave NUNCA vai no codigo nem aqui: entra pelo ambiente. Vazia = modo
+      # simulado, que mantem o sistema de pe offline.
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_API_URL: ${LLM_API_URL:-https://api.openai.com/v1/chat/completions}
+      LLM_MODELO: ${LLM_MODELO:-gpt-4o-mini}
+      LLM_TIMEOUT: ${LLM_TIMEOUT:-20}
+      TENTATIVAS_LLM: ${TENTATIVAS_LLM:-3}
+    depends_on:
+      recuperacao:
+        condition: service_healthy
+
+volumes:
+  indice:
