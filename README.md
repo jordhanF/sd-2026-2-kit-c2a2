@@ -3,6 +3,8 @@
 **Sistemas Distribuídos e Computação em Nuvem · FAESA · 2026/2**
 Prof. M.Sc. Howard Cruz Roatti · Aluno: Jordhan ([@jordhanF](https://github.com/jordhanF))
 
+[![testes](https://github.com/jordhanF/sd-2026-2-kit-c2a2/actions/workflows/testes.yml/badge.svg)](https://github.com/jordhanF/sd-2026-2-kit-c2a2/actions/workflows/testes.yml)
+
 Um sistema de perguntas e respostas sobre documentos próprios (RAG), decomposto em
 **três serviços independentes** mais um **worker de fila**, com a dependência externa
 lenta e instável — a API do LLM — protegida por **disjuntor, tempo-limite e retentativa**.
