@@ -1,0 +1,28 @@
+# Roda a suite a cada push e a cada pull request.
+#
+# Serve de prova de que o projeto sobe do zero numa maquina limpa: o CI nao tem
+# o .env, nao tem Redis e nao tem nada do meu ambiente - se a suite depende de
+# algo que so existe aqui, ela quebra aqui, nao na correcao.
+name: testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Rodar a suite
+        run: python -m pytest testes -q
