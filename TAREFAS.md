@@ -37,7 +37,9 @@
 - [x] Citar quais documentos embasaram a resposta - campo `fontes` em `/perguntar`,
       com o melhor score de cada origem.
 - [x] Persistir os vetores em disco - `servicos/comum/repositorio.py` (item 1).
-- [ ] Avaliacao automatica simples da qualidade da resposta - nao implementada.
+- [x] Avaliacao automatica simples da qualidade da resposta - `servicos/comum/avaliacao.py`:
+      fundamentacao da resposta no contexto e cobertura da pergunta pelo contexto,
+      com veredito legivel no campo `avaliacao` de `/perguntar`.
 - [ ] Trocar TF-IDF por embeddings de verdade (sentence-transformers) - fora de escopo:
       exigiria ~90 MB de download e quebraria a promessa de rodar offline.
 

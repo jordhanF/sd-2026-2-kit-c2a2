@@ -30,6 +30,11 @@ def main() -> int:
     print("FONTES:")
     for fonte in corpo["fontes"]:
         print(f"  - {fonte['origem']} (relevancia {fonte['score']:.4f})")
+    medida = corpo["avaliacao"]
+    print(f"\nAVALIACAO AUTOMATICA: {medida['veredito']}")
+    print(f"  fundamentacao no contexto: {medida['fundamentacao']:.2f}")
+    print(f"  cobertura da pergunta:     {medida['cobertura_da_pergunta']:.2f}")
+
     print(f"\nindice versao {corpo['versao_indice']} | modelo {corpo['modelo']}")
     return 0
 

@@ -106,3 +106,13 @@ def test_o_modulo_declara_DOIS_disjuntores_independentes():
     verificacao e do modulo como ele sobe em producao.
     """
     assert geracao.disjuntor_llm is not geracao.disjuntor_recuperacao
+
+
+def test_resposta_vem_com_avaliacao_automatica(cliente, monkeypatch):
+    monkeypatch.setattr(geracao, "_buscar_contexto", lambda p, k: CONTEXTO)
+    corpo = cliente.post("/perguntar",
+                         json={"pergunta": "o que diz o teorema CAP?"}).json()
+    avaliacao = corpo["avaliacao"]
+    assert set(avaliacao) == {"fundamentacao", "cobertura_da_pergunta",
+                              "veredito", "termos_da_resposta"}
+    assert 0.0 <= avaliacao["fundamentacao"] <= 1.0
