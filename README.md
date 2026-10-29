@@ -350,6 +350,34 @@ indice versao 0a8a856fc27b | modelo gpt-4o-mini
 
 ---
 
+## A avaliação automática da resposta
+
+Toda resposta volta com duas medidas, e elas apontam para **serviços diferentes**:
+
+```json
+"avaliacao": {
+  "fundamentacao": 0.8462,
+  "cobertura_da_pergunta": 0.6667,
+  "veredito": "fundamentada"
+}
+```
+
+- **`fundamentacao`** — fração dos termos da resposta que aparecem no contexto. Baixa
+  significa que o gerador falou de coisa que ninguém recuperou: o sintoma clássico de
+  alucinação em RAG.
+- **`cobertura_da_pergunta`** — fração dos termos da pergunta que o contexto cobre. Baixa
+  acusa a **recuperação**, não o gerador: não adianta culpar o LLM por material que nunca
+  chegou até ele.
+
+Duas ressalvas, porque um número sem ressalva engana: é sobreposição de palavras, não
+compreensão — resposta que *contradiz* o contexto usando as mesmas palavras passa batido;
+e flexão não é tratada, então uma paráfrase fiel fica em torno de 0,85 e não em 1,00 (por
+isso o limite de "fundamentada" é 0,5). No **modo simulado** a fundamentação é alta por
+construção, já que a resposta é montada a partir do próprio contexto — a medida só começa
+a dizer alguma coisa com um LLM de verdade escrevendo. É alarme de fumaça barato, não juiz.
+
+---
+
 ## Decisões de projeto
 
 **Dois disjuntores, não um.** `disjuntor_recuperacao` cobre a chamada HTTP à recuperação e
@@ -470,6 +498,7 @@ ordenação, reranking e corte de relevância sem subir servidor nenhum.
 | Extensão: reranking | `servicos/comum/ranking.py` (cosseno + cobertura de termos) |
 | Extensão: citar as fontes | campo `fontes` na resposta de `/perguntar` |
 | Extensão: persistir os vetores | `servicos/comum/repositorio.py` (JSON + joblib em volume) |
+| Extensão: avaliação automática da resposta | `servicos/comum/avaliacao.py` (campo `avaliacao`) |
 
 ## Estrutura
 

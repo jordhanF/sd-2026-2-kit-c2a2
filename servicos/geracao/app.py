@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 from servicos.comum import ambiente  # noqa: F401  carrega o .env primeiro
 from servicos.comum import log
+from servicos.comum.avaliacao import avaliar
 from servicos.comum.circuit_breaker import CircuitBreaker, CircuitoAberto
 from servicos.comum.llm import API_KEY, MODELO, gerar
 from servicos.comum.retentativa import com_retentativa
@@ -128,6 +129,7 @@ def perguntar(p: Pergunta):
 
     return {"pergunta": p.pergunta, "resposta": resposta,
             "fontes": _fontes(resultados), "contexto": contexto,
+            "avaliacao": avaliar(p.pergunta, resposta, contexto),
             "versao_indice": dados.get("versao"), "modelo": MODELO}
 
 
